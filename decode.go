@@ -5,7 +5,7 @@ type Config map[string]map[string]string
 
 const (
 	// Default is the default section value.
-	Default = "default"
+	Default = ""
 )
 
 func Decode(conf string) (Config, error) {

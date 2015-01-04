@@ -108,6 +108,71 @@ bat=baseball`,
 				},
 			},
 		},
+
+		// TODO Property names - can have underscores?
+		{
+			conf: "user_name=user1234",
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"user_name": "user1234",
+				},
+			},
+		},
+		// TODO Property names - case sensitive?
+		{
+			conf: `username=user1234
+USERNAME=user`,
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"username": "user1234",
+					"USERNAME": "user",
+				},
+			},
+		},
+		// TODO Property names - can they have spaces in them?
+		{
+			conf: "user name=foo",
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"user name": "foo",
+				},
+			},
+		},
+
+		// Subsections
+		{
+			conf: `
+global=1
+user=user2
+[database]
+user=user1
+password=1234
+[foo]
+user=user2`,
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"global": "1",
+					"user":   "user2",
+				},
+				"database": map[string]string{
+					"user":     "user1",
+					"password": "1234",
+				},
+				"foo": map[string]string{
+					"user": "user2",
+				},
+			},
+		},
+		// Subsection - with a comment
+		{
+			conf: `[database] # this is the db section
+	user=foobar`,
+			want: map[string]map[string]string{
+				"database": map[string]string{
+					"user": "foobar",
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		c, err := Decode(test.conf)
