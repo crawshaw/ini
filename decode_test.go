@@ -16,6 +16,41 @@ func TestDecode(t *testing.T) {
 		{
 			conf: "",
 		},
+		{
+			conf: "a=b",
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"a": "b",
+				},
+			},
+		},
+		// Comments at start of lines are ignored
+		{
+			conf: `#this is a comment a=b
+; and so is this`,
+		},
+		// TODO What should we do with comments in the middle of a line? See http://en.wikipedia.org/wiki/INI_file#Comments
+		{
+			conf: "a=b#this is a comment",
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"a": "b#this is a comment",
+				},
+			},
+			// Or maybe this should error.
+		},
+		// Blank lines ignored
+		{
+			conf: `foo=bar
+			
+bar=foo`,
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"foo": "bar",
+					"bar": "foo",
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		c, err := Decode(test.conf)
