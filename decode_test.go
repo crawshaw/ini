@@ -173,6 +173,57 @@ user=user2`,
 				},
 			},
 		},
+
+		// Blank subsection - go to global?
+		{
+			conf: `user=1
+[foo]
+user=2
+[]
+user=3`,
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"user": "3",
+				},
+				"foo": map[string]string{
+					"user": "2",
+				},
+			},
+		},
+		// Multiple subsections with identical name - keep overwriting that section as if they were contiguous
+		// in the file
+		{
+			conf: `
+[foo]
+bar=1
+[baz]
+bar=2
+[foo]
+bar=3`,
+			want: map[string]map[string]string{
+				"foo": map[string]string{
+					"bar": "3",
+				},
+				"baz": map[string]string{
+					"bar": "2",
+				},
+			},
+		},
+
+		// TODO Invalid section header - what should happen?
+		{
+			conf: `
+[foo
+bar=1`,
+			wantErr: "Invalid section header",
+		},
+		// TODO Two section headers on same line - what should happen?
+		{
+			conf: `
+[foo][bar]
+baz=1`,
+			wantErr: "Invalid section header",
+		},
 	}
 	for _, test := range tests {
 		c, err := Decode(test.conf)
@@ -180,6 +231,8 @@ user=user2`,
 			t.Errorf("Decode(%s): got %v want %v", test.conf, c, test.want)
 		} else if test.wantErr == "" && err != nil {
 			t.Errorf("Decode(%s): got error %v wanted no error", test.conf, err)
+		} else if test.wantErr != "" && err == nil {
+			t.Errorf("Decode(%s): got nil error wanted one containing %q", test.conf, test.wantErr)
 		} else if test.wantErr != "" && !strings.Contains(err.Error(), test.wantErr) {
 			t.Errorf("Decode(%s): got error %v wanted one containing %q", test.conf, err, test.wantErr)
 		}
