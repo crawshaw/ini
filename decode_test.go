@@ -224,6 +224,11 @@ bar=1`,
 baz=1`,
 			wantErr: "Invalid section header",
 		},
+		// TODO assignment on same line as section header - what should happen?
+		{
+			conf: "[foo]bar=1",
+			wantErr: "Invalid section header",
+		}
 	}
 	for _, test := range tests {
 		c, err := Decode(test.conf)
