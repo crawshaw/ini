@@ -24,6 +24,15 @@ func TestDecode(t *testing.T) {
 				},
 			},
 		},
+		{
+			// Both a=b and c:d are allowed - see http://en.wikipedia.org/wiki/INI_file section "Name/value delimiter"
+			conf: "a:b",
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"a": "b",
+				},
+			},
+		},
 		// Comments at start of lines are ignored
 		{
 			conf: `#this is a comment a=b
@@ -34,11 +43,22 @@ func TestDecode(t *testing.T) {
 			conf: "a=b#this is a comment",
 			want: map[string]map[string]string{
 				Default: map[string]string{
-					"a": "b#this is a comment",
+					"a": "b",
 				},
 			},
 			// Or maybe this should error.
 		},
+
+		// ESCAPE SEQUENCES
+		{
+			conf: `a=b\#this is a comment\;`,
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"a": "b#this is a comment;",
+				},
+			},
+		},
+
 		// Blank lines ignored
 		{
 			conf: `foo=bar
@@ -48,6 +68,43 @@ bar=foo`,
 				Default: map[string]string{
 					"foo": "bar",
 					"bar": "foo",
+				},
+			},
+		},
+		// Duplicate k/v pairs - last one is used. TODO is this right? See http://en.wikipedia.org/wiki/INI_file#Duplicate_names
+		{
+			conf: `foo=bar
+foo=baz`,
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"foo": "baz",
+				},
+			},
+		},
+
+		// WHITESPACE
+		// http://en.wikipedia.org/wiki/INI_file#Whitespace - there are a few options here.
+		{
+			conf: "  foo=    bar flag",
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"foo": "    bar flag",
+				},
+			},
+		},
+
+		// Quoted values - http://en.wikipedia.org/wiki/INI_file#Quoted_values
+		// TODO do we agree that quotes should just be included literally?
+		{
+			conf: `
+bar="foo"
+baz='bar'
+bat=baseball`,
+			want: map[string]map[string]string{
+				Default: map[string]string{
+					"bar": `"foo"`,
+					"baz": `'bar'`,
+					"bat": "baseball",
 				},
 			},
 		},
